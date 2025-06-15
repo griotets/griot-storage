@@ -14,10 +14,10 @@ const upload = multer({ dest: 'uploads/' })
 
 // Wasabi config (S3-compatible)
 const s3 = new AWS.S3({
-  endpoint: 'https://s3.us-east-1.wasabisys.com',
+  endpoint: process.env.VT_WASABI_ENDPOINT,
   accessKeyId: process.env.VT_ACCESS_KEY,
   secretAccessKey: process.env.VT_SECRET_KEY,
-  region: 'us-east-1'
+  region: process.env.VT_WASABI_REGION
 })
 
 // Store SSE connections by ID
@@ -69,11 +69,11 @@ app.post('/upload/:id', upload.single('video'), (req, res) => {
     fs.unlinkSync(req.file.path)
     const client = clients.get(id)
     if (client) {
-      client.write(`event: done\ndata: ${data.Location}\n\n`)
+      client.write(`event: done\ndata: ${data.Location.replace(process.env.VT_GRIOT_ENPOINT,process.env.VT_CDN_LINK)}\n\n`)
       client.end()
     }
     if (err) return res.status(500).json({ error: err })
-    res.json({ url: data.Location })
+    res.json({ url: data.Location.replace(process.env.VT_GRIOT_ENPOINT,process.env.VT_CDN_LINK) })
   })
 })
 app.listen(3000, () => console.log('✅ SSE + Upload server running on port 3000'))
