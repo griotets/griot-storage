@@ -6,6 +6,7 @@ const fs = require("fs");
 const cors = require("cors");
 const { v4: uuidv4 } = require("uuid");
 const request = require("request");
+const mime = require("mime-types"); // Add at the top if not present
 
 require("dotenv").config();
 
@@ -44,17 +45,21 @@ app.get("/progress/:id", (req, res) => {
 });
 
 // Upload video to Wasabi
-app.post("/upload/:id", upload.single("video"), (req, res) => {
+// Upload file (video, image, html, pdf, etc.) to Wasabi
+app.post("/upload/:id", upload.single("file"), (req, res) => {
   const id = req.params.id;
   const key = `${req.body.path}/${req.file.originalname}`;
   console.log(req.file);
   const fileStream = fs.createReadStream(req.file.path);
 
+  // Detect MIME type based on file extension
+  const contentType = mime.lookup(req.file.originalname) || "application/octet-stream";
+
   const params = {
     Bucket: "griot-videos",
     Key: key,
     Body: fileStream,
-    ContentType: "video/mp4",
+    ContentType: contentType,
     ACL: "public-read",
   };
 
